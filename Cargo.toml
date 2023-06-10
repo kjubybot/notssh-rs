@@ -1,0 +1,2 @@
+[workspace]
+members = ["notssh-util", "notssh-server", "notssh-ctl", "notssh-client"]

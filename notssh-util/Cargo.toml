@@ -1,0 +1,10 @@
+[package]
+name = "notssh-util"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+http = "0.2.9"
+sqlx = "0.6.3"
+tonic = "0.9"
+tokio = "1.28.1"

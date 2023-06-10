@@ -1,0 +1,47 @@
+syntax = "proto3";
+package notssh_cli;
+
+message ListRequest {}
+
+message ListResponse {
+  message Client {
+    string id = 1;
+    string address = 2;
+    bool connected = 3;
+  }
+
+  repeated Client clients = 1;
+}
+
+message PurgeRequest {
+  string id = 1;
+}
+
+message PurgeResponse {
+  string text = 1;
+}
+
+message PingRequest {
+  string id = 1;
+}
+
+message PingResponse {}
+
+message ShellRequest {
+  string id = 1;
+  string cmd = 2;
+  repeated string args = 3;
+  bytes stdin = 4;
+}
+
+message ShellResponse {
+  bytes stdout = 1;
+  bytes stderr = 2;
+}
+
+service NotSshCli {
+  rpc List (ListRequest) returns (ListResponse);
+  rpc Ping (PingRequest) returns (PingResponse);
+  rpc Purge (PurgeRequest) returns (PurgeResponse);
+  rpc Shell (ShellRequest) returns (ShellResponse);
+}

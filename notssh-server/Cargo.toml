@@ -1,0 +1,25 @@
+[package]
+name = "notssh-server"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+notssh-util = { version = "0.1.0", path = "../notssh-util" }
+
+async-stream = "0.3.5"
+chrono = "0.4.24"
+clap = { version = "4.3.2", features = ["derive"] }
+env_logger = "0.10.0"
+futures-core = "0.3.28"
+log = "0.4.17"
+prost = "0.11"
+serde = { version = "1.0.164", features = ["derive"] }
+serde_yaml = "0.9.21"
+sqlx = { version = "0.6.3", features = ["postgres", "runtime-tokio-native-tls", "chrono"] }
+tokio = { version = "1.28.1", features = ["signal", "rt", "macros", "rt-multi-thread"] }
+tokio-stream = { version = "0.1.14", features = ["net"] }
+tonic = "0.9"
+uuid = { version = "1.3.2", features = ["v4"] }
+
+[build-dependencies]
+tonic-build = "0.9"

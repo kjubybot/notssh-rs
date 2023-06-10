@@ -1,0 +1,17 @@
+[package]
+name = "notssh-ctl"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+notssh-util = { version = "0.1.0", path = "../notssh-util" }
+
+anyhow = "1.0.71"
+clap = { version = "4.3.2", features = ["derive"] }
+prost = "0.11"
+tokio = { version = "1.28.1", features = ["signal", "rt", "macros", "rt-multi-thread", "io-std"] }
+tonic = "0.9"
+tower = "0.4.13"
+
+[build-dependencies]
+tonic-build = "0.9"

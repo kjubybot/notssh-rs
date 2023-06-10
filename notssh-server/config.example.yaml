@@ -1,0 +1,8 @@
+socket: cli.sock
+db:
+  host: localhost
+  port: 5432
+  username: notssh
+  password: notssh
+  database: notssh
+  use_ssl: false
