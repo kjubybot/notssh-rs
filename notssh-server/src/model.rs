@@ -347,60 +347,6 @@ impl PingCommand {
     }
 }
 
-// TODO do I even need this?
-#[derive(sqlx::FromRow)]
-pub struct PurgeCommand {
-    id: String,
-}
-
-impl PurgeCommand {
-    pub fn new(id: String) -> Self {
-        Self { id }
-    }
-
-    pub async fn _get(id: &str, ex: impl Executor<'_, Database = Postgres>) -> error::Result<Self> {
-        sqlx::query_as("SELECT * FROM purge WHERE id = $1")
-            .bind(id)
-            .fetch_one(ex)
-            .await
-            .map_err(From::from)
-    }
-
-    pub async fn create(self, ex: impl Executor<'_, Database = Postgres>) -> error::Result<()> {
-        sqlx::query("INSERT INTO purge (id) VALUES ($1)")
-            .bind(self.id)
-            .execute(ex)
-            .await?;
-        Ok(())
-    }
-
-    pub async fn delete(id: &str, ex: impl Executor<'_, Database = Postgres>) -> error::Result<()> {
-        sqlx::query("DELETE FROM purge WHERE id = $1")
-            .bind(id)
-            .execute(ex)
-            .await?;
-        Ok(())
-    }
-
-    pub async fn _list(
-        opts: ListOptions,
-        ex: impl Executor<'_, Database = Postgres>,
-    ) -> error::Result<Vec<Self>> {
-        let mut builder = QueryBuilder::new("SELECT * FROM purge");
-        if let Some(limit) = opts.limit {
-            builder.push(" LIMIT ").push_bind(limit);
-        }
-        if let Some(offset) = opts.offset {
-            builder.push(" OFFSET ").push_bind(offset);
-        }
-        builder
-            .build_query_as()
-            .fetch_all(ex)
-            .await
-            .map_err(From::from)
-    }
-}
-
 #[derive(sqlx::FromRow)]
 pub struct ShellCommand {
     id: String,

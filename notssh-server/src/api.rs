@@ -8,7 +8,7 @@ use crate::{
     },
 };
 use chrono::Utc;
-use model::{ActionCommand, ActionState, Client, PingCommand, PurgeCommand};
+use model::{ActionCommand, ActionState, Client, PingCommand};
 use sqlx::PgPool;
 
 const PING_INTERVAL: Duration = Duration::from_secs(60);
@@ -63,13 +63,7 @@ impl Server {
                         }
                         act.result = Some(pong.pong.into());
                     }
-                    res::Result::Purge(_) => {
-                        if let Err(e) = PurgeCommand::delete(&res.id, &mut tx).await {
-                            log::error!("cannot delete purge command from database: {}", e);
-                            continue;
-                        }
-                        act.result = Some("purged".into());
-                    }
+                    res::Result::Purge(_) => act.result = Some("purged".into()),
                     res::Result::Shell(shell) => {
                         if let Err(e) = ShellCommand::delete(&res.id, &mut tx).await {
                             log::error!("cannot delete shell command from database: {}", e);

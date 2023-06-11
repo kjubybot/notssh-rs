@@ -95,4 +95,10 @@ impl From<tonic::Status> for Error {
     }
 }
 
+impl From<std::io::Error> for Error {
+    fn from(value: std::io::Error) -> Self {
+        Self::io(value.to_string())
+    }
+}
+
 impl std::error::Error for Error {}

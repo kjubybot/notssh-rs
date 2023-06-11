@@ -123,7 +123,8 @@ impl NotSshCli for CliServer {
             };
 
         if let Some(result) = act.result {
-            let result = String::from_utf8(result).unwrap(); // TODO error handling?
+            let result = String::from_utf8(result)
+                .map_err(|_| error::Error::bad_request("cannot parse ping response"))?;
             if result == msg {
                 return Ok(tonic::Response::new(PingResponse {}));
             }
@@ -157,16 +158,10 @@ impl NotSshCli for CliServer {
         };
 
         let act = model::Action::new(client.id, ActionCommand::Purge);
-        let cmd = model::PurgeCommand::new(act.id.clone());
         let id = act.id.clone();
 
         if let Err(e) = act.create(&mut tx).await {
             log::error!("cannot create action in database: {}", e);
-            return Err(e.into());
-        }
-
-        if let Err(e) = cmd.create(&mut tx).await {
-            log::error!("cannot create purge command in database: {}", e);
             return Err(e.into());
         }
 
@@ -193,7 +188,8 @@ impl NotSshCli for CliServer {
             };
 
         if let Some(result) = act.result {
-            let result = String::from_utf8(result).unwrap(); // TODO error handling
+            let result = String::from_utf8(result)
+                .map_err(|_| error::Error::bad_request("cannot parse purge response"))?;
             if result == "purged" {
                 return Ok(tonic::Response::new(PurgeResponse { text: result }));
             }

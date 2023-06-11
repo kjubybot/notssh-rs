@@ -123,7 +123,9 @@ async fn main() -> Result<(), anyhow::Error> {
         .into_inner();
 
     while let Some(act) = res.message().await? {
-        let cmd = act.command.unwrap(); // TODO error handling
+        let cmd = act
+            .command
+            .ok_or(error::Error::bad_request("action contains no command"))?;
         let res = match cmd {
             notssh::action::Command::Ping(ping) => Res {
                 id: act.id,

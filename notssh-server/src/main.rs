@@ -4,7 +4,6 @@ use std::{
     time::Duration,
 };
 
-use chrono::Utc;
 use clap::Parser;
 use log::LevelFilter;
 use notssh::not_ssh_server::NotSshServer;
@@ -17,7 +16,7 @@ use tokio::{
 };
 use tokio_stream::wrappers::UnixListenerStream;
 
-use model::{ActionCommand, ActionState, ListOptions, PingCommand, PurgeCommand, ShellCommand};
+use model::{ActionCommand, ActionState, ListOptions, PingCommand, ShellCommand};
 
 mod api;
 mod cli;
@@ -140,7 +139,7 @@ async fn gc(pool: PgPool, mut rx: Receiver<()>) {
                 for act in actions {
                     if let Err(e) = match act.command {
                         ActionCommand::Ping => PingCommand::delete(&act.id, &mut tx).await,
-                        ActionCommand::Purge => PurgeCommand::delete(&act.id, &mut tx).await,
+                        ActionCommand::Purge => Ok(()),
                         ActionCommand::Shell => ShellCommand::delete(&act.id, &mut tx).await,
                     } {
                         log::error!(target: "GC", "cannot delete command from database: {}", e);
@@ -275,7 +274,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
     log::info!("Shutting down");
     tx.send(())?;
-    // TODO force shutdown on timeout
     let _ = tokio::join!(gc_handle, server_handle, cli_server_handle);
 
     Ok(())
