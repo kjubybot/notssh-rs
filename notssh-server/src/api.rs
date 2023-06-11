@@ -11,6 +11,8 @@ use chrono::Utc;
 use model::{ActionCommand, ActionState, Client, PingCommand, PurgeCommand};
 use sqlx::PgPool;
 
+const PING_INTERVAL: Duration = Duration::from_secs(60);
+
 pub struct Server {
     db: PgPool,
 }
@@ -147,6 +149,51 @@ impl Server {
             log::error!("cannot commit transaction: {}", e);
         }
     }
+
+    async fn ping_client(pool: PgPool, client_id: String) {
+        let mut i = tokio::time::interval(PING_INTERVAL);
+        loop {
+            i.tick().await;
+
+            let mut tx = match pool.begin().await {
+                Ok(tx) => tx,
+                Err(e) => {
+                    log::error!(target: "HC", "cannot begin transaction: {}", e);
+                    break;
+                }
+            };
+
+            let client = match Client::get(&client_id, &mut tx).await {
+                Ok(client) => client,
+                Err(e) => {
+                    log::error!(target: "HC", "cannot get client from database: {}", e);
+                    break;
+                }
+            };
+            if !client.connected {
+                log::info!(target: "HC", "client '{}' is not connected, stopping", client.id);
+                break;
+            }
+
+            let act = model::Action::new(client.id, ActionCommand::Ping);
+            let cmd = PingCommand::new(act.id.clone(), String::from("ping"));
+
+            if let Err(e) = act.create(&mut tx).await {
+                log::error!(target: "HC", "cannot create action in database: {}", e);
+                break;
+            }
+
+            if let Err(e) = cmd.create(&mut tx).await {
+                log::error!(target: "HC", "cannot create ping command in database: {}", e);
+                break;
+            }
+
+            if let Err(e) = tx.commit().await {
+                log::error!(target: "HC", "cannot commit transaction: {}", e);
+                break;
+            }
+        }
+    }
 }
 
 #[tonic::async_trait]
@@ -221,6 +268,7 @@ impl NotSsh for Server {
                 return Err(e.into());
             }
         };
+        let client_id = client.id.clone();
 
         if client.connected {
             return Err(tonic::Status::invalid_argument(
@@ -240,8 +288,8 @@ impl NotSsh for Server {
             return Err(tonic::Status::internal("internal error"));
         }
 
-        // TODO add client liveness probe
         log::info!("Server: client with ID '{}' connected", id);
+        tokio::spawn(Self::ping_client(self.db.clone(), client_id));
 
         let res = request.into_inner();
         let db = self.db.clone();
@@ -255,6 +303,10 @@ impl NotSsh for Server {
                         continue;
                     },
                 };
+
+                let client = model::Client::get(&id, &mut tx).await?;
+                // a hack to return error from try_stream macro, which only supports '?'
+                client.connected.then_some(()).ok_or(tonic::Status::cancelled("client disconnected"))?;
 
                 let mut act = match model::Action::get_next(&id, &mut tx).await? {
                     Some(act) => act,

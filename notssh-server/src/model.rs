@@ -119,6 +119,17 @@ impl Client {
             .await
             .map_err(From::from)
     }
+
+    pub async fn list_stale(
+        ttl: std::time::Duration,
+        ex: impl Executor<'_, Database = Postgres>,
+    ) -> error::Result<Vec<Self>> {
+        sqlx::query_as("SELECT * FROM clients WHERE current_timestamp - last_online >= $1")
+            .bind(ttl)
+            .fetch_all(ex)
+            .await
+            .map_err(From::from)
+    }
 }
 
 #[derive(Debug, sqlx::Type)]

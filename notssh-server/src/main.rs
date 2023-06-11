@@ -116,7 +116,6 @@ struct Args {
 
 async fn gc(pool: PgPool, mut rx: Receiver<()>) {
     log::info!(target: "GC", "Starting GC");
-    let client_ttl = chrono::Duration::from_std(CLIENT_TTL).unwrap();
     let mut i = tokio::time::interval(Duration::from_secs(3600)); // Sweep stale records once in an
                                                                   // hour
     loop {
@@ -153,21 +152,18 @@ async fn gc(pool: PgPool, mut rx: Receiver<()>) {
                     }
                 }
 
-                log::debug!(target: "GC", "removing stale clients");
-                // TODO filter stale clients on SQL level
-                let clients = match model::Client::list(ListOptions::new(), &mut tx).await {
+                let clients = match model::Client::list_stale(CLIENT_TTL, &mut tx).await {
                     Ok(clients) => clients,
                     Err(e) => {
                         log::error!(target: "GC", "cannot list disconnected clients: {}", e);
                         continue;
                     }
                 };
+                log::debug!(target: "GC", "removing stale clients: {:?}", clients);
                 for client in clients {
-                    if Utc::now() - client.last_online > client_ttl {
                         if let Err(e) = model::Client::delete(&client.id, &mut tx).await {
                             log::error!(target: "GC", "cannot delete stale client '{}' from database: {}", client.id, e);
                         }
-                    }
                 }
 
                 if let Err(e) = tx.commit().await {
@@ -195,7 +191,7 @@ async fn gc(pool: PgPool, mut rx: Receiver<()>) {
         }
     };
 
-    for mut client in clients {
+    for mut client in clients.into_iter().filter(|c| c.connected) {
         client.connected = false;
         if let Err(e) = client.update(&mut tx).await {
             log::error!(target: "GC", "cannot update client in database: {}", e);
