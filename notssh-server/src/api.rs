@@ -128,6 +128,7 @@ impl Server {
             }
         };
         client.connected = false;
+        client.address = None;
         client.last_online = Utc::now();
 
         if let Err(e) = client.update(&mut tx).await {
@@ -271,6 +272,9 @@ impl NotSsh for Server {
         }
         client.connected = true;
         client.last_online = Utc::now();
+        if let Some(addr) = request.remote_addr() {
+            client.address = Some(addr.to_string());
+        }
 
         if let Err(e) = client.update(&mut tx).await {
             log::error!("cannot update client in database: {}", e);

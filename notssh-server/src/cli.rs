@@ -56,7 +56,6 @@ impl NotSshCli for CliServer {
             .into_iter()
             .map(|c| list_response::Client {
                 id: c.id,
-                address: c.address.unwrap_or(String::from("-")),
                 connected: c.connected,
             })
             .collect();

@@ -14,9 +14,7 @@ pub mod list_response {
     pub struct Client {
         #[prost(string, tag = "1")]
         pub id: ::prost::alloc::string::String,
-        #[prost(string, tag = "2")]
-        pub address: ::prost::alloc::string::String,
-        #[prost(bool, tag = "3")]
+        #[prost(bool, tag = "2")]
         pub connected: bool,
     }
 }

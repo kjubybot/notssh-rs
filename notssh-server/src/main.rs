@@ -192,6 +192,7 @@ async fn gc(pool: PgPool, mut rx: Receiver<()>) {
 
     for mut client in clients.into_iter().filter(|c| c.connected) {
         client.connected = false;
+        client.address = None;
         if let Err(e) = client.update(&mut tx).await {
             log::error!(target: "GC", "cannot update client in database: {}", e);
         }

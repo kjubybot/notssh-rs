@@ -2,6 +2,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug)]
 pub enum ErrorKind {
+    None,
     DB,
     NotFound,
     IO,
@@ -19,6 +20,10 @@ pub struct Error {
 impl Error {
     pub fn new(kind: ErrorKind, description: String) -> Self {
         Self { kind, description }
+    }
+
+    pub fn none(description: impl Into<String>) -> Self {
+        Self::new(ErrorKind::None, description.into())
     }
 
     pub fn db(description: impl Into<String>) -> Self {
